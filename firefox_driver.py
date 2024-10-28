@@ -3,8 +3,8 @@ from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
-import pickle
 from fake_useragent import UserAgent
+from webdriver_manager.firefox import GeckoDriverManager  # Import WebDriver Manager
 
 
 class FirefoxDriver:
@@ -21,7 +21,10 @@ class FirefoxDriver:
             self.options.set_preference(
                 "general.useragent.override", self.user_agent
             )  # 設置用戶代理
-            self.driver = webdriver.Firefox(options=self.options)
+            # Use WebDriver Manager to get the GeckoDriver
+            self.driver = webdriver.Firefox(
+                service=Service(GeckoDriverManager().install()), options=self.options
+            )
             init_time = time.time() - start_time
             print(f"Time to initialize WebDriver: {init_time:.4f} seconds")
             print(f"Using User Agent: {self.user_agent}")  # 打印使用的用戶代理

@@ -239,7 +239,7 @@ def auto_login(driver, username, password):
             except TimeoutException:
                 print(f"Timeout: 無法找到指定元素，請檢查 XPath 或增加等待時間。")
                 return False
-            input("Enter to continue...")
+            # input("Enter to continue...")
         except Exception as e:
             print(f"點擊登入按鈕時出現錯誤: {e}")
         return True

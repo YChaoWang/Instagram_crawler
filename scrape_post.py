@@ -13,7 +13,7 @@ def search_instagram_location(driver, link, target_posts):
     print(f"Search Location Link: {link}")
     driver.get(link)
     time.sleep(np.random.uniform(3, 5))
-    input("Enter to continue...")
+    # input("Enter to continue...")
     try:
         tqdm_wait(
             driver,
