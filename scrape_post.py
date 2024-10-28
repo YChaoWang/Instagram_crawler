@@ -125,10 +125,7 @@ def get_post_author(driver):
         )
         # 獲取 href 屬性
         author_href = author_element.get_attribute("href")
-        # 去掉基礎 URL 和結尾的斜杠
-        author_account_name = author_href.replace(
-            "https://www.instagram.com/", ""
-        ).rstrip("/")
+        author_account_name = author_href.split("/")[-2]  # 提取用戶名
         print(f"作者的 href 屬性為: {author_href}")
         return author_href, author_account_name  # 返回 href和 author_account_name
 

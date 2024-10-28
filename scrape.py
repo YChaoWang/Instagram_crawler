@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from tqdm import tqdm
 import time
+import concurrent.futures
 
 
 def tqdm_wait(driver, timeout, condition, desc="Waiting"):
@@ -24,7 +25,6 @@ def tqdm_wait(driver, timeout, condition, desc="Waiting"):
 
 
 def scrape_instagram_data(driver, search_query, indexes_to_extract=[0, 1, 2, 3, 5]):
-    # 搜尋 Google，尋找 IG 地點
     driver.get(f"https://www.google.com/search?q={search_query}")
     time.sleep(np.random.uniform(3, 5))
 
@@ -35,7 +35,7 @@ def scrape_instagram_data(driver, search_query, indexes_to_extract=[0, 1, 2, 3, 
         desc="Loading Google Search Page",
     )
 
-    # 尋找 Instagram 的連結
+    # Collect Instagram links first
     instagram_links = []
     links = driver.find_elements(By.TAG_NAME, "a")
     for link in links:
@@ -44,52 +44,94 @@ def scrape_instagram_data(driver, search_query, indexes_to_extract=[0, 1, 2, 3, 
             instagram_links.append(href)
             print("Instagram location 連結:", href)
 
+    # If no links are found, exit the function
     if not instagram_links:
         print("未找到 Instagram 地點連結")
         return []
 
-    # 提取指定的數據
+    # Use ThreadPoolExecutor to scrape Instagram links concurrently after all links have been gathered
     all_needed_data = []
-    for instagram_link in instagram_links:
-        driver.get(instagram_link)
-
-        # 等待包含 x9f619 的 div 加載完成
-        try:
-            tqdm_wait(
-                driver,
-                10,
-                EC.presence_of_element_located(
-                    (By.XPATH, '//div[contains(@class, "x9f619")]//h1')
-                ),
-                desc="Loading Instagram Location Page",
-            )
-        except TimeoutException:
-            print("Timeout: 無法找到指定元素，請檢查 XPath 或增加等待時間。")
-            continue
-
-        # 抓取 h1 的內容
-        location_title = None
-        try:
-            location_title_element = driver.find_element(By.XPATH, "//h1")
-            location_title = location_title_element.text.strip()
-            print("地點標題:", location_title)
-        except Exception as e:
-            print("無法找到地點標題:", e)
-
-        # 抓取 span 的數據
-        needed_data = []
-        spans = driver.find_elements(
-            By.XPATH,
-            '//div[contains(@class, "x9f619")]/span[contains(@class, "x1lliihq")]',
-        )
-        for index in indexes_to_extract:
-            if index < len(spans):
-                needed_data.append(spans[index].text.strip())
-
-        # 把地點標題和鏈結加入到數據
-        all_needed_data.append([instagram_link] + [location_title] + needed_data)
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        # Only start executing scrape_individual_location after all links are collected
+        future_to_link = {
+            executor.submit(
+                scrape_individual_location, driver, link, indexes_to_extract
+            ): link
+            for link in instagram_links
+        }
+        for future in concurrent.futures.as_completed(future_to_link):
+            try:
+                data = future.result()
+                if data:
+                    all_needed_data.append(data)
+            except Exception as e:
+                print(f"Error scraping {future_to_link[future]}: {e}")
 
     return all_needed_data
+
+
+def scrape_individual_location(driver, instagram_link, indexes_to_extract):
+    # Ensure instagram_link is a string
+    if not isinstance(instagram_link, str):
+        raise ValueError(f"Expected a string URL, got {type(instagram_link)}")
+
+    driver.get(instagram_link)
+    time.sleep(np.random.uniform(3, 5))
+    # Extract the required data
+    needed_data = []
+    needed_data.append(instagram_link)
+    # 等待包含 x9f619 的 div 加載完成
+    try:
+        tqdm_wait(
+            driver,
+            10,
+            EC.presence_of_element_located(
+                (By.XPATH, '//div[contains(@class, "x9f619")]//h1')
+            ),
+            desc="Loading Instagram Location Page",
+        )
+    except TimeoutException:
+        print("Timeout: 無法找到指定元素，請檢查 XPath 或增加等待時間。")
+
+    # 抓取 h1 的內容
+    location_title = None
+    try:
+        location_title_element = driver.find_element(By.XPATH, "//h1")
+        location_title = location_title_element.text.strip()
+        print("地點標題:", location_title)
+    except Exception as e:
+        print("無法找到地點標題:", e)
+
+    # Wait for the required elements to load
+    try:
+        tqdm_wait(
+            driver,
+            20,
+            EC.presence_of_all_elements_located(
+                (
+                    By.XPATH,
+                    '//div[contains(@class, "x9f619")]/span[contains(@class, "x1lliihq")]',
+                )
+            ),
+            desc="Loading Instagram Location Page",
+        )
+    except TimeoutException:
+        print("Timeout: 無法找到指定元素，請檢查 XPath 或增加等待時間。")
+        return None
+
+    needed_data.append(location_title)
+    spans = driver.find_elements(
+        By.XPATH, '//div[contains(@class, "x9f619")]/span[contains(@class, "x1lliihq")]'
+    )
+    for index in indexes_to_extract:
+        if index < len(spans):
+            needed_data.append(spans[index].text.strip())
+
+    # # 把地點標題和鏈結加入到數據
+    # all_needed_data.append([instagram_link] + [location_title] + needed_data)
+    # print(f"Needed data: {needed_data}\n")
+
+    return needed_data
 
 
 def search_instagram_profile(driver, search_query):
