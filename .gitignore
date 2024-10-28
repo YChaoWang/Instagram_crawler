@@ -14,8 +14,8 @@ ENV/
 # Logs
 *.log
 
-# Result directory
-result/
+# # Result directory
+# result/
 
 # IDE specific files
 .vscode/
