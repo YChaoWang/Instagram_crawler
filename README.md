@@ -1,7 +1,7 @@
 # Instagram Crawler
 
 ## Overview
-This project is an Instagram crawler that allows users to scrape data from Instagram locations and posts. It utilizes Selenium for web automation and BeautifulSoup for HTML parsing. The crawler can extract information such as post counts, authors, and content from specified Instagram locations.
+This project is an Instagram crawler that allows users to scrape data from Instagram locations and posts. It utilizes Selenium and apply multithreads for web automation and BeautifulSoup for HTML parsing. The crawler can extract information such as post counts, authors, and content from specified Instagram locations.
 
 ## Features
 - Scrapes Instagram location data based on search queries.
@@ -66,7 +66,7 @@ Contributions are welcome! If you have suggestions for improvements or new featu
 # Instagram 爬蟲
 
 ## 概述
-這個項目是一個 Instagram 爬蟲，允許用戶從 Instagram 地點和貼文中抓取數據。它利用 Selenium 進行網頁自動化，並使用 BeautifulSoup 進行 HTML 解析。該爬蟲可以從指定的 Instagram 地點提取貼文數量、作者和內容等信息。
+這個項目是一個 Instagram 爬蟲，允許用戶從 Instagram 地點和貼文中抓取數據。它利用 Selenium 以多線程進行網頁自動化，並使用 BeautifulSoup 進行 HTML 解析。該爬蟲可以從指定的 Instagram 地點提取貼文數量、作者和內容等信息。
 
 ## 功能
 - 根據搜索查詢抓取 Instagram 地點數據。
